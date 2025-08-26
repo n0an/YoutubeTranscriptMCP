@@ -14,7 +14,7 @@ from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, Vide
 from mcp.server.fastmcp import FastMCP
 
 # Create the MCP server
-mcp = FastMCP("YouTube Tools Server")
+mcp = FastMCP("YouTube Tools Server", host="0.0.0.0", port=8000)
 
 
 @mcp.tool()

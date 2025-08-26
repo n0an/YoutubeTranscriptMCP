@@ -104,7 +104,7 @@ def get_youtube_transcript(video_url_or_id: str, language: str = "en") -> str:
 
 def main():
     """Run the YouTube MCP server."""
-    mcp.run()
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":

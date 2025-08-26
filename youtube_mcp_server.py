@@ -16,8 +16,8 @@ from tavily import TavilyClient
 from mcp.server.fastmcp import FastMCP
 
 # Create the MCP server
-# mcp = FastMCP("YouTube & Web Search Tools Server", host="0.0.0.0", port=8000)
-mcp = FastMCP("YouTube & Web Search Tools Server")
+mcp = FastMCP("YouTube & Web Search Tools Server", host="0.0.0.0", port=8000)
+# mcp = FastMCP("YouTube & Web Search Tools Server")
 
 
 
@@ -182,7 +182,8 @@ def search_web(query: str, max_results: int = 5, include_domains: Optional[List[
 def main():
     """Run the YouTube MCP server."""
     # mcp.run(transport="sse")
-    mcp.run()
+    # mcp.run()
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":

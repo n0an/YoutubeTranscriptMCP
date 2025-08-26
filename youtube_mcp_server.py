@@ -1,5 +1,5 @@
 """
-YouTube MCP Server - Extract video IDs and transcripts from YouTube videos.
+YouTube MCP Server - Extract video IDs and transcripts from YouTube videos, and search the web.
 
 Run with:
     uv run mcp dev youtube_mcp_server.py
@@ -7,14 +7,18 @@ Run with:
     python youtube_mcp_server.py
 """
 
+import os
 import re
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, VideoUnavailable
+from tavily import TavilyClient
 
 from mcp.server.fastmcp import FastMCP
 
 # Create the MCP server
-mcp = FastMCP("YouTube Tools Server", host="0.0.0.0", port=8000)
+# mcp = FastMCP("YouTube & Web Search Tools Server", host="0.0.0.0", port=8000)
+mcp = FastMCP("YouTube & Web Search Tools Server")
+
 
 
 @mcp.tool()
@@ -102,9 +106,83 @@ def get_youtube_transcript(video_url_or_id: str, language: str = "en") -> str:
         return f"Error getting transcript: {str(e)}"
 
 
+@mcp.tool()
+def search_web(query: str, max_results: int = 5, include_domains: Optional[List[str]] = None, exclude_domains: Optional[List[str]] = None) -> str:
+    """
+    Search the web using Tavily API to get comprehensive information about any topic.
+    
+    Args:
+        query: The search query string
+        max_results: Maximum number of results to return (default: 5, max: 20)
+        include_domains: Optional list of domains to include in search (e.g., ["wikipedia.org", "github.com"])
+        exclude_domains: Optional list of domains to exclude from search (e.g., ["example.com"])
+    
+    Returns:
+        Formatted search results with titles, URLs, and content snippets
+    """
+    try:
+        # Get API key from environment variable
+        api_key = os.getenv("TAVILY_API_KEY")
+        if not api_key:
+            return "Error: TAVILY_API_KEY environment variable not set. Please set your Tavily API key."
+        
+        # Initialize Tavily client
+        client = TavilyClient(api_key=api_key)
+        
+        # Prepare search parameters
+        search_params = {
+            "query": query,
+            "max_results": min(max_results, 20),  # Cap at 20 as per Tavily limits
+            "search_depth": "advanced",
+            "include_answer": True,
+            "include_raw_content": False
+        }
+        
+        # Add domain filters if provided
+        if include_domains:
+            search_params["include_domains"] = include_domains
+        if exclude_domains:
+            search_params["exclude_domains"] = exclude_domains
+        
+        # Perform search
+        response = client.search(**search_params)
+        
+        # Format results
+        formatted_results = f"**Search Query:** {query}\n\n"
+        
+        # Add answer if available
+        if response.get("answer"):
+            formatted_results += f"**Quick Answer:**\n{response['answer']}\n\n"
+        
+        # Add search results
+        if response.get("results"):
+            formatted_results += "**Search Results:**\n\n"
+            
+            for i, result in enumerate(response["results"], 1):
+                title = result.get("title", "No title")
+                url = result.get("url", "No URL")
+                content = result.get("content", "No content available")
+                
+                # Truncate content if too long
+                if len(content) > 300:
+                    content = content[:297] + "..."
+                
+                formatted_results += f"{i}. **{title}**\n"
+                formatted_results += f"   URL: {url}\n"
+                formatted_results += f"   {content}\n\n"
+        else:
+            formatted_results += "No search results found.\n"
+        
+        return formatted_results.strip()
+        
+    except Exception as e:
+        return f"Error performing web search: {str(e)}"
+
+
 def main():
     """Run the YouTube MCP server."""
-    mcp.run(transport="streamable-http")
+    # mcp.run(transport="sse")
+    mcp.run()
 
 
 if __name__ == "__main__":

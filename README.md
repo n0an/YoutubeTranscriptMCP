@@ -13,12 +13,12 @@ uv sync
 uv add "mcp[cli]" youtube-transcript-api tavily-python
 ```
 
-### Using pip
-```bash
-pip install .
-```
-
 ## Usage
+
+### Run server
+```bash
+uv run youtube_mcp_server.py
+```
 
 ### Development Mode
 Test the server with MCP Inspector:
